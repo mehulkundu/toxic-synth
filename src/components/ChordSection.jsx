@@ -1,7 +1,6 @@
-import Knob from "./Knob";
 import ChordButton from "./ChordButton";
 
-const ChordSection = ({ chordType, setChordType, transpose, setTranspose }) => {
+const ChordSection = ({ chordType, setChordType }) => {
   const chordIntervals = {
     major: [0, 4, 7],
     minor: [0, 3, 7],
@@ -33,16 +32,6 @@ const ChordSection = ({ chordType, setChordType, transpose, setTranspose }) => {
             onClick={() => setChordType(chord)}
           />
         ))}
-      </div>
-      <div className='flex justify-center'>
-        <Knob
-          label='TRANSPOSE'
-          value={transpose}
-          onChange={setTranspose}
-          min={-24}
-          max={24}
-          step={1}
-        />
       </div>
     </div>
   );
