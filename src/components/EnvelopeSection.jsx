@@ -1,139 +1,87 @@
 import { useRef, useEffect } from "react";
-import TabButton from "./TabButton";
+import ModuleContainer from "./ModuleContainer";
 import ControlButton from "./ControlButton";
 import Knob from "./Knob";
 
-const EnvelopeSection = ({
-  activeTab,
-  setActiveTab,
-  env1,
-  setEnv1,
-  env2,
-  setEnv2,
-  env3,
-  setEnv3,
-}) => {
+const Envelope = ({ env, setEnv, envNum }) => {
   const envCanvasRef = useRef(null);
-
-  const currentEnv = activeTab === 1 ? env1 : activeTab === 2 ? env2 : env3;
-  const setCurrentEnv =
-    activeTab === 1 ? setEnv1 : activeTab === 2 ? setEnv2 : setEnv3;
 
   useEffect(() => {
     const canvas = envCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    const w = canvas.width,
-      h = canvas.height;
-    ctx.fillStyle = "#0a0a0a";
+    const w = canvas.width, h = canvas.height;
+    ctx.fillStyle = "#1a1a1a";
     ctx.fillRect(0, 0, w, h);
 
-    if (!currentEnv.on) {
-      ctx.fillStyle = "#333";
-      ctx.font = "14px monospace";
+    if (!env.on) {
+      ctx.fillStyle = "#444";
+      ctx.font = "12px monospace";
       ctx.textAlign = "center";
       ctx.fillText("OFF", w / 2, h / 2);
       return;
     }
 
-    const totalTime = currentEnv.a + currentEnv.d + 0.5 + currentEnv.r;
-    const scale = w / totalTime;
+    const attackTime = env.a;
+    const decayTime = env.d;
+    const sustainLevel = env.s;
+    const releaseTime = env.r;
+
+    // Calculate total duration for scaling, ensuring sustain has some visual presence
+    const minSustainDisplayTime = 0.2; // Minimum time to display sustain level
+    const totalDuration = attackTime + decayTime + releaseTime + minSustainDisplayTime;
+    const scaleX = w / totalDuration;
+
     ctx.strokeStyle = "#f7931e";
-    ctx.lineWidth = 3;
-    ctx.shadowBlur = 10;
-    ctx.shadowColor = "#f7931e";
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
-    ctx.moveTo(0, h);
-    ctx.lineTo(currentEnv.a * scale, h * 0.1);
-    ctx.lineTo((currentEnv.a + currentEnv.d) * scale, h * (1 - currentEnv.s));
-    ctx.lineTo(
-      (currentEnv.a + currentEnv.d + 0.5) * scale,
-      h * (1 - currentEnv.s)
-    );
-    ctx.lineTo(w, h);
+    ctx.moveTo(0, h); // Start at (0, 0) in canvas coordinates (bottom-left)
+
+    // Attack
+    const attackX = attackTime * scaleX;
+    ctx.lineTo(attackX, 0); // Peak at (attackTime, 1)
+
+    // Decay
+    const decayX = (attackTime + decayTime) * scaleX;
+    ctx.lineTo(decayX, h * (1 - sustainLevel)); // Decay to sustain level
+
+    // Sustain - extend to allow for release
+    const sustainX = w - (releaseTime * scaleX);
+    ctx.lineTo(sustainX, h * (1 - sustainLevel));
+
+    // Release
+    ctx.lineTo(w, h); // Release to (totalDuration, 0)
+
     ctx.stroke();
-    ctx.shadowBlur = 0;
-  }, [currentEnv]);
+  }, [env]);
 
   return (
-    <div
-      className='p-5 rounded-xl transition-all duration-200 hover:shadow-lg'
-      style={{
-        background: "linear-gradient(145deg, #252525, #1a1a1a)",
-        boxShadow: "inset 2px 2px 5px #0a0a0a, inset -2px -2px 5px #2a2a2a",
-      }}>
-      <div className='flex items-center justify-between mb-3'>
-        <div className='flex gap-1'>
-          <TabButton
-            num={1}
-            active={activeTab}
-            onClick={() => setActiveTab(1)}
-          />
-          <TabButton
-            num={2}
-            active={activeTab}
-            onClick={() => setActiveTab(2)}
-          />
-          <TabButton
-            num={3}
-            active={activeTab}
-            onClick={() => setActiveTab(3)}
-          />
+    <ModuleContainer title={`ENV ${envNum}`}>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-end">
+          <ControlButton active={env.on} onClick={() => setEnv({ ...env, on: !env.on })} />
         </div>
-        <div className='text-sm font-bold text-orange-400 tracking-widest'>
-          ENVELOPE
+        <canvas ref={envCanvasRef} width={200} height={40} className="w-full h-10 rounded bg-black" />
+        <div className="grid grid-cols-4 gap-2">
+          <Knob label="A" value={env.a} onChange={(v) => setEnv({ ...env, a: v })} min={0.01} max={2} step={0.01} size={48} />
+          <Knob label="D" value={env.d} onChange={(v) => setEnv({ ...env, d: v })} min={0.01} max={2} step={0.01} size={48} />
+          <Knob label="S" value={env.s} onChange={(v) => setEnv({ ...env, s: v })} min={0} max={1} step={0.01} size={48} />
+          <Knob label="R" value={env.r} onChange={(v) => setEnv({ ...env, r: v })} min={0.01} max={3} step={0.01} size={48} />
         </div>
-        <ControlButton
-          active={currentEnv.on}
-          onClick={() => setCurrentEnv({ ...currentEnv, on: !currentEnv.on })}
-        />
       </div>
+    </ModuleContainer>
+  );
+};
 
-      <div
-        className='mb-3 rounded-lg overflow-hidden transition-all duration-200'
-        style={{
-          background: "#0a0a0a",
-          boxShadow: "inset 2px 2px 4px #000",
-        }}>
-        <canvas ref={envCanvasRef} width={400} height={80} className='w-full' />
-      </div>
-
-      <div className='grid grid-cols-4 gap-3'>
-        <Knob
-          label='ATK'
-          value={currentEnv.a}
-          onChange={(v) => setCurrentEnv({ ...currentEnv, a: v })}
-          min={0.01}
-          max={2}
-          step={0.01}
-        />
-        <Knob
-          label='DEC'
-          value={currentEnv.d}
-          onChange={(v) => setCurrentEnv({ ...currentEnv, d: v })}
-          min={0.01}
-          max={2}
-          step={0.01}
-        />
-        <Knob
-          label='SUS'
-          value={currentEnv.s}
-          onChange={(v) => setCurrentEnv({ ...currentEnv, s: v })}
-          min={0}
-          max={1}
-          step={0.01}
-        />
-        <Knob
-          label='REL'
-          value={currentEnv.r}
-          onChange={(v) => setCurrentEnv({ ...currentEnv, r: v })}
-          min={0.01}
-          max={3}
-          step={0.01}
-        />
-      </div>
+const EnvelopeSection = ({ env1, setEnv1, env2, setEnv2, env3, setEnv3 }) => {
+  return (
+    <div className="flex flex-col gap-4">
+      <Envelope env={env1} setEnv={setEnv1} envNum={1} />
+      <Envelope env={env2} setEnv={setEnv2} envNum={2} />
+      <Envelope env={env3} setEnv={setEnv3} envNum={3} />
     </div>
   );
 };
 
 export default EnvelopeSection;
+

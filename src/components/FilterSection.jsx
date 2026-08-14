@@ -1,155 +1,137 @@
 import { useRef, useEffect } from "react";
-import TabButton from "./TabButton";
+import ModuleContainer from "./ModuleContainer";
 import ControlButton from "./ControlButton";
 import WaveButton from "./WaveButton";
 import Knob from "./Knob";
 
-const FilterSection = ({
-  activeTab,
-  setActiveTab,
-  filter1,
-  setFilter1,
-  filter2,
-  setFilter2,
-  filter3,
-  setFilter3,
-}) => {
+const Filter = ({ filter, setFilter, filterNum }) => {
   const filterCanvasRef = useRef(null);
-
-  const currentFilter =
-    activeTab === 1 ? filter1 : activeTab === 2 ? filter2 : filter3;
-  const setCurrentFilter =
-    activeTab === 1 ? setFilter1 : activeTab === 2 ? setFilter2 : setFilter3;
 
   useEffect(() => {
     const canvas = filterCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext("2d");
-    const w = canvas.width,
-      h = canvas.height;
-    ctx.fillStyle = "#0a0a0a";
+    const w = canvas.width, h = canvas.height;
+    ctx.fillStyle = "#1a1a1a";
     ctx.fillRect(0, 0, w, h);
 
-    if (!currentFilter.on) {
-      ctx.fillStyle = "#333";
-      ctx.font = "14px monospace";
+    if (!filter.on) {
+      ctx.fillStyle = "#444";
+      ctx.font = "12px monospace";
       ctx.textAlign = "center";
       ctx.fillText("OFF", w / 2, h / 2);
       return;
     }
 
     ctx.strokeStyle = "#ffd700";
-    ctx.lineWidth = 2;
-    ctx.shadowBlur = 8;
-    ctx.shadowColor = "#ffd700";
+    ctx.lineWidth = 1.5;
     ctx.beginPath();
+
+    const minFreq = 20; // Hz
+    const maxFreq = 20000; // Hz
+    const minDb = -40;
+    const maxDb = 0;
+
     for (let x = 0; x < w; x++) {
-      const freq = 20 * Math.pow(1000, x / w);
-      const normalized = freq / currentFilter.freq;
-      let response;
-      if (currentFilter.type === "lowpass") {
-        response =
-          1 / Math.sqrt(1 + Math.pow(normalized * currentFilter.res, 2));
-      } else {
-        response =
-          normalized /
-          Math.sqrt(1 + Math.pow(normalized / currentFilter.res, 2));
+      const freq = minFreq * Math.pow(maxFreq / minFreq, x / w);
+      const normalizedFreq = freq / filter.freq;
+      let gain;
+
+      switch (filter.type) {
+        case "lowpass":
+          gain = 1 / Math.sqrt(
+            Math.pow(1 - normalizedFreq * normalizedFreq, 2) +
+            Math.pow(normalizedFreq / filter.res, 2)
+          );
+          break;
+        case "highpass":
+          gain = normalizedFreq * normalizedFreq / Math.sqrt(
+            Math.pow(1 - normalizedFreq * normalizedFreq, 2) +
+            Math.pow(normalizedFreq / filter.res, 2)
+          );
+          break;
+        case "bandpass":
+          gain = (normalizedFreq / filter.res) / Math.sqrt(
+            Math.pow(1 - normalizedFreq * normalizedFreq, 2) +
+            Math.pow(normalizedFreq / filter.res, 2)
+          );
+          break;
+        case "notch":
+          gain = Math.sqrt(Math.pow(1 - normalizedFreq * normalizedFreq, 2)) / Math.sqrt(
+            Math.pow(1 - normalizedFreq * normalizedFreq, 2) +
+            Math.pow(normalizedFreq / filter.res, 2)
+          );
+          break;
+        case "peaking":
+          // Simplified peaking gain calculation for visualization
+          gain = 1 + (filter.gain * (normalizedFreq / filter.res)) / (
+            Math.pow(1 - normalizedFreq * normalizedFreq, 2) +
+            Math.pow(normalizedFreq / filter.res, 2)
+          );
+          break;
+        case "lowshelf": {
+          // More representative lowshelf gain calculation for visualization
+          const lsGain = Math.pow(10, filter.gain / 20);
+          gain = 1 + (lsGain - 1) / (1 + Math.pow(normalizedFreq, 2));
+          break;
+        }
+        case "highshelf": {
+          // More representative highshelf gain calculation for visualization
+          const hsGain = Math.pow(10, filter.gain / 20);
+          gain = 1 + (hsGain - 1) * (Math.pow(normalizedFreq, 2) / (1 + Math.pow(normalizedFreq, 2)));
+          break;
+        }
+        default:
+          gain = 1;
       }
-      const y = h - response * h * 0.8;
+
+      const gainDb = 20 * Math.log10(Math.max(gain, 0.0001)); // Clamp to avoid log(0)
+      let y = h - ((gainDb - minDb) / (maxDb - minDb)) * h;
+      y = Math.max(0, Math.min(h, y)); // Clamp y to canvas height
+
       if (x === 0) ctx.moveTo(x, y);
       else ctx.lineTo(x, y);
     }
     ctx.stroke();
-    ctx.shadowBlur = 0;
-  }, [currentFilter]);
+  }, [filter]);
 
   return (
-    <div
-      className='p-5 rounded-xl transition-all duration-200 hover:shadow-lg'
-      style={{
-        background: "linear-gradient(145deg, #252525, #1a1a1a)",
-        boxShadow: "inset 2px 2px 5px #0a0a0a, inset -2px -2px 5px #2a2a2a",
-      }}>
-      <div className='flex items-center justify-between mb-3'>
-        <div className='flex gap-1'>
-          <TabButton
-            num={1}
-            active={activeTab}
-            onClick={() => setActiveTab(1)}
-          />
-          <TabButton
-            num={2}
-            active={activeTab}
-            onClick={() => setActiveTab(2)}
-          />
-          <TabButton
-            num={3}
-            active={activeTab}
-            onClick={() => setActiveTab(3)}
-          />
+    <ModuleContainer title={`FILTER ${filterNum}`}>
+      <div className="flex flex-col gap-4">
+        <div className="flex items-center justify-between">
+          <div className="flex gap-1">
+            <WaveButton wave="lowpass" selected={filter.type === "lowpass"} onClick={() => setFilter({ ...filter, type: "lowpass" })} />
+            <WaveButton wave="highpass" selected={filter.type === "highpass"} onClick={() => setFilter({ ...filter, type: "highpass" })} />
+            <WaveButton wave="bandpass" selected={filter.type === "bandpass"} onClick={() => setFilter({ ...filter, type: "bandpass" })} />
+            <WaveButton wave="notch" selected={filter.type === "notch"} onClick={() => setFilter({ ...filter, type: "notch" })} />
+            <WaveButton wave="peaking" selected={filter.type === "peaking"} onClick={() => setFilter({ ...filter, type: "peaking" })} />
+            <WaveButton wave="lowshelf" selected={filter.type === "lowshelf"} onClick={() => setFilter({ ...filter, type: "lowshelf" })} />
+            <WaveButton wave="highshelf" selected={filter.type === "highshelf"} onClick={() => setFilter({ ...filter, type: "highshelf" })} />
+          </div>
+          <ControlButton active={filter.on} onClick={() => setFilter({ ...filter, on: !filter.on })} />
         </div>
-        <div className='text-sm font-bold text-orange-400 tracking-widest'>
-          FILTER
+        <canvas ref={filterCanvasRef} width={200} height={40} className="w-full h-10 rounded bg-black" />
+        <div className="grid grid-cols-2 gap-4">
+          <Knob label="FREQ" value={filter.freq} onChange={(v) => setFilter({ ...filter, freq: v })} min={100} max={10000} step={100} size={48} />
+          <Knob label="RES" value={filter.res} onChange={(v) => setFilter({ ...filter, res: v })} min={0.1} max={20} step={0.1} size={48} />
+          {(filter.type === "peaking" || filter.type === "lowshelf" || filter.type === "highshelf") && (
+            <Knob label="GAIN" value={filter.gain} onChange={(v) => setFilter({ ...filter, gain: v })} min={-20} max={20} step={0.1} size={48} />
+          )}
         </div>
-        <ControlButton
-          active={currentFilter.on}
-          onClick={() =>
-            setCurrentFilter({ ...currentFilter, on: !currentFilter.on })
-          }
-        />
       </div>
+    </ModuleContainer>
+  );
+};
 
-      <div
-        className='mb-3 rounded-lg overflow-hidden transition-all duration-200'
-        style={{
-          background: "#0a0a0a",
-          boxShadow: "inset 2px 2px 4px #000",
-        }}>
-        <canvas
-          ref={filterCanvasRef}
-          width={400}
-          height={80}
-          className='w-full'
-        />
-      </div>
-
-      <div className='grid grid-cols-2 gap-2 mb-3'>
-        <WaveButton
-          wave='lowpass'
-          selected={currentFilter.type === "lowpass"}
-          onClick={() =>
-            setCurrentFilter({ ...currentFilter, type: "lowpass" })
-          }
-        />
-        <WaveButton
-          wave='highpass'
-          selected={currentFilter.type === "highpass"}
-          onClick={() =>
-            setCurrentFilter({ ...currentFilter, type: "highpass" })
-          }
-        />
-      </div>
-
-      <div className='grid grid-cols-2 gap-6'>
-        <Knob
-          label='FREQ'
-          value={currentFilter.freq}
-          onChange={(v) => setCurrentFilter({ ...currentFilter, freq: v })}
-          min={100}
-          max={8000}
-          step={50}
-        />
-        <Knob
-          label='RES'
-          value={currentFilter.res}
-          onChange={(v) => setCurrentFilter({ ...currentFilter, res: v })}
-          min={0.1}
-          max={20}
-          step={0.1}
-        />
-      </div>
+const FilterSection = ({ filter1, setFilter1, filter2, setFilter2, filter3, setFilter3 }) => {
+  return (
+    <div className="flex flex-col gap-4">
+      <Filter filter={filter1} setFilter={setFilter1} filterNum={1} />
+      <Filter filter={filter2} setFilter={setFilter2} filterNum={2} />
+      <Filter filter={filter3} setFilter={setFilter3} filterNum={3} />
     </div>
   );
 };
 
 export default FilterSection;
+

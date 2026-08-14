@@ -19,15 +19,20 @@ export const useSynthEngine = () => {
   const [env1, setEnv1] = useState({ on: true, a: 0.01, d: 0.2, s: 0.7, r: 0.3 });
   const [env2, setEnv2] = useState({ on: true, a: 0.1, d: 0.3, s: 0.5, r: 0.5 });
   const [env3, setEnv3] = useState({ on: false, a: 0.5, d: 0.4, s: 0.3, r: 1.0 });
-  const [filter1, setFilter1] = useState({ on: true, freq: 2000, res: 1, type: "lowpass" });
-  const [filter2, setFilter2] = useState({ on: true, freq: 1000, res: 5, type: "lowpass" });
-  const [filter3, setFilter3] = useState({ on: false, freq: 4000, res: 0.5, type: "lowpass" });
+  const [filter1, setFilter1] = useState({ on: true, freq: 2000, res: 1, type: "lowpass", gain: 0 });
+  const [filter2, setFilter2] = useState({ on: true, freq: 1000, res: 5, type: "lowpass", gain: 0 });
+  const [filter3, setFilter3] = useState({ on: false, freq: 4000, res: 0.5, type: "lowpass", gain: 0 });
   const [lfo1, setLfo1] = useState({ on: false, rate: 4, depth: 0, wave: "sine" });
   const [lfo2, setLfo2] = useState({ on: false, rate: 0.5, depth: 0, wave: "sine" });
   const [lfo3, setLfo3] = useState({ on: false, rate: 8, depth: 0, wave: "triangle" });
   const [routing, setRouting] = useState({ osc1: { env: "env1", filter: "filter1", lfo: "lfo1" }, osc2: { env: "env2", filter: "filter2", lfo: "lfo2" }, osc3: { env: "env3", filter: "filter3", lfo: "lfo3" } });
+  const [delay, setDelay] = useState({ on: true, time: 0.3, feedback: 0.4 });
+  const [reverb, setReverb] = useState({ on: true, decay: 2, mix: 0.5 });
   const [chordType, setChordType] = useState("major");
   const [transpose, setTranspose] = useState(0);
+
+  const octaveUp = () => setTranspose(prev => prev + 12);
+  const octaveDown = () => setTranspose(prev => prev - 12);
 
   const audioContextRef = useRef(null);
   const activeNotesRef = useRef(new Map());
@@ -44,11 +49,13 @@ export const useSynthEngine = () => {
     };
   }, []);
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (masterGainRef.current) {
       masterGainRef.current.gain.setTargetAtTime(volume, audioContextRef.current.currentTime, 0.1);
     }
-  }, [volume]);
+  }, [volume, audioContextRef, masterGainRef]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   const playChord = useCallback((baseFreq, key, chordType) => {
     if (!isOn || !audioContextRef.current || pressedKeysRef.current.has(key)) return;
@@ -92,6 +99,9 @@ export const useSynthEngine = () => {
             filterNode.type = flt.type;
             filterNode.frequency.value = flt.freq;
             filterNode.Q.value = flt.res;
+            if (flt.type === "peaking" || flt.type === "lowshelf" || flt.type === "highshelf") {
+              filterNode.gain.value = flt.gain;
+            }
             if (lfo.on && lfo.depth > 0) {
               const lfoOsc = ctx.createOscillator();
               lfoOsc.type = lfo.wave;
@@ -169,6 +179,6 @@ export const useSynthEngine = () => {
     activeFilterTab, setActiveFilterTab, activeLfoTab, setActiveLfoTab, osc1, setOsc1, osc2, setOsc2,
     osc3, setOsc3, env1, setEnv1, env2, setEnv2, env3, setEnv3, filter1, setFilter1, filter2, setFilter2,
     filter3, setFilter3, lfo1, setLfo1, lfo2, setLfo2, lfo3, setLfo3, routing, setRouting, chordType,
-    setChordType, transpose, setTranspose, playChord, stopChord, pressedKeysRef,
+    setChordType, transpose, setTranspose, playChord, stopChord, pressedKeysRef, delay, setDelay, reverb, setReverb, octaveUp, octaveDown,
   };
 };

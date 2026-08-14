@@ -14,12 +14,7 @@ const ChordSection = ({ chordType, setChordType }) => {
   };
 
   return (
-    <div
-      className='p-4 rounded-xl mb-4 transition-all duration-200 hover:shadow-lg'
-      style={{
-        background: "linear-gradient(145deg, #252525, #1a1a1a)",
-        boxShadow: "inset 2px 2px 4px #0a0a0a, inset -2px -2px 4px #2a2a2a",
-      }}>
+    <div className='transition-all duration-200'>
       <div className='text-sm font-bold text-orange-400 mb-3 text-center tracking-widest'>
         CHORD MODE
       </div>

@@ -1,4 +1,6 @@
 
+import NoteButton from "./NoteButton";
+
 const RootNoteSelector = ({ rootNote, setRootNote }) => {
   const notes = [
     { value: 261.63, label: "C" },
@@ -16,26 +18,19 @@ const RootNoteSelector = ({ rootNote, setRootNote }) => {
   ];
 
   return (
-    <div className="p-4 rounded-xl mb-4 transition-all duration-200 hover:shadow-lg"
-         style={{
-           background: "linear-gradient(145deg, #252525, #1a1a1a)",
-           boxShadow: "inset 2px 2px 4px #0a0a0a, inset -2px -2px 4px #2a2a2a",
-         }}>
+    <div className="transition-all duration-200">
       <div className="text-sm font-bold text-orange-400 mb-3 text-center tracking-widest">
         ROOT NOTE
       </div>
-      <div className="flex justify-center">
-        <select
-          value={rootNote}
-          onChange={(e) => setRootNote(parseFloat(e.target.value))}
-          className="bg-gray-700 text-white p-2 rounded"
-        >
-          {notes.map((note) => (
-            <option key={note.value} value={note.value}>
-              {note.label}
-            </option>
-          ))}
-        </select>
+      <div className="flex justify-center flex-wrap gap-2">
+        {notes.map((note) => (
+          <NoteButton
+            key={note.value}
+            note={note.label}
+            selected={rootNote === note.value}
+            onClick={() => setRootNote(note.value)}
+          />
+        ))}
       </div>
     </div>
   );

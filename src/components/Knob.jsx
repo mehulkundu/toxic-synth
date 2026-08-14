@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 
 const Knob = ({
   label,
@@ -7,38 +7,17 @@ const Knob = ({
   min = 0,
   max = 100,
   step = 1,
-  detents = 8,
-  size = 16,
+  size = 64, // Adjusted for a more compact design
   className = "",
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [editValue, setEditValue] = useState(value.toString());
 
-  // Enhanced rotation calculation with better range
-  const rotation = ((value - min) / (max - min)) * 330 - 165;
-
-  // Snap to detents
-  const snapToDetent = (rawValue) => {
-    if (detents <= 1) return rawValue;
-    const range = max - min;
-    const detentSize = range / (detents - 1);
-    const snappedValue =
-      Math.round((rawValue - min) / detentSize) * detentSize + min;
-    const snapThreshold = detentSize * 0.1;
-    if (Math.abs(rawValue - snappedValue) < snapThreshold) {
-      return snappedValue;
-    }
-    return rawValue;
-  };
+  // More realistic rotation range (e.g., -135 to 135 degrees)
+  const rotation = ((value - min) / (max - min)) * 270 - 135;
 
   const handleInputChange = (e) => {
     let newValue = parseFloat(e.target.value);
-
-    // Apply snapping if detents are enabled
-    if (detents > 1) {
-      newValue = snapToDetent(newValue);
-    }
-
     onChange(newValue);
   };
 
@@ -55,9 +34,6 @@ const Knob = ({
       if (step) {
         newValue = Math.round(newValue / step) * step;
       }
-      if (detents > 1) {
-        newValue = snapToDetent(newValue);
-      }
       onChange(newValue);
     }
   };
@@ -68,25 +44,52 @@ const Knob = ({
     }
   };
 
-  const knobSize = `w-${size} h-${size}`;
+  // Generate tick marks
+  const ticks = useMemo(() => {
+    const numTicks = 11; // e.g., 0% to 100% in 10% increments
+    return Array.from({ length: numTicks }, (_, i) => {
+      const angle = -135 + (i / (numTicks - 1)) * 270;
+      return {
+        angle,
+        isMajor: i % 5 === 0, // Major ticks at start and end
+      };
+    });
+  }, []);
+
+  const knobStyle = {
+    width: `${size}px`,
+    height: `${size}px`,
+  };
+
+  const innerKnobStyle = {
+    transform: `rotate(${rotation}deg)`,
+  };
 
   return (
-    <div className={`flex flex-col items-center gap-3 group ${className}`}>
-      <div className={`relative ${knobSize}`}>
-        {/* Outer ring - clean without scale marks */}
-        <div className='absolute inset-0 rounded-full bg-gradient-to-br from-gray-900 to-black'>
-          {/* Subtle glow effect only */}
-          <div
-            className='absolute inset-0 rounded-full opacity-20'
-            style={{
-              background:
-                "conic-gradient(from 0deg, transparent, rgba(249,115,22,0.2) 10%, transparent 30%, transparent, rgba(249,115,22,0.1) 70%, transparent)",
-            }}
-          />
+    <div className={`flex flex-col items-center gap-2 group ${className}`}>
+      <div className='relative' style={knobStyle}>
+        {/* Tick Marks */}
+        <div className='absolute inset-0'>
+          {ticks.map((tick, i) => (
+            <div
+              key={i}
+              className='absolute w-px h-full left-1/2 top-0'
+              style={{ transform: `rotate(${tick.angle}deg)` }}>
+              <div
+                className={`mx-auto ${
+                  tick.isMajor ? "h-2 bg-gray-400" : "h-1 bg-gray-600"
+                }`}
+                style={{ width: "1px" }}
+              />
+            </div>
+          ))}
         </div>
 
-        {/* Main premium knob */}
-        <div className='absolute inset-1 rounded-full cursor-pointer transition-all duration-200 group-hover:scale-105 group-active:scale-95'>
+        {/* Main Knob */}
+        <div
+          className='absolute rounded-full cursor-pointer transition-all duration-200 group-hover:scale-105 group-active:scale-95'
+          style={{ inset: "8px" }} // Space for ticks
+        >
           {/* Hidden range input */}
           <input
             type='range'
@@ -98,112 +101,41 @@ const Knob = ({
             className='absolute inset-0 w-full h-full opacity-0 cursor-pointer z-20'
           />
 
-          {/* Knob body with premium gradients */}
+          {/* Knob Body */}
           <div
             className='absolute inset-0 rounded-full transition-all duration-200'
             style={{
-              background: `
-                radial-gradient(circle at 30% 30%, #4a4a4a 0%, #1a1a1a 70%),
-                linear-gradient(145deg, #2a2a2a, #1a1a1a)
-              `,
-              boxShadow: `
-                inset 0 2px 4px rgba(255,255,255,0.1),
-                inset 0 -2px 4px rgba(0,0,0,0.8),
-                0 8px 24px rgba(0,0,0,0.8),
-                0 2px 6px rgba(0,0,0,0.4)
-              `,
-              border: "1px solid rgba(0,0,0,0.4)",
+              background:
+                "radial-gradient(circle at 50% 40%, #5a5a5a 0%, #2a2a2a 100%)",
+              boxShadow:
+                "inset 0 2px 3px rgba(0,0,0,0.5), inset 0 -1px 1px rgba(255,255,255,0.1), 0 5px 10px rgba(0,0,0,0.5)",
+              border: "1px solid #111",
             }}
           />
 
-          {/* Rotating inner part */}
+          {/* Rotating Indicator */}
           <div
-            className='absolute inset-2 rounded-full transition-transform duration-150'
-            style={{
-              background: `
-                radial-gradient(circle at 40% 40%, #3a3a3a, #1a1a1a),
-                linear-gradient(145deg, #2a2a2a, #1a1a1a)
-              `,
-              boxShadow: `
-                inset 2px 2px 4px rgba(255,255,255,0.05),
-                inset -2px -2px 4px rgba(0,0,0,0.8),
-                0 2px 4px rgba(0,0,0,0.3)
-              `,
-              transform: `rotate(${rotation}deg)`,
-            }}>
-            {/* Premium indicator with glow */}
+            className='absolute inset-0 rounded-full transition-transform duration-150'
+            style={innerKnobStyle}>
             <div
-              className='absolute w-1 h-4 left-1/2 transition-all duration-200'
+              className='absolute w-1 h-3 bg-orange-500 rounded-full'
               style={{
-                background:
-                  "linear-gradient(to bottom, #f97316, #dc2626, #991b1b)",
+                left: "50%",
                 transform: "translateX(-50%)",
-                top: "2px",
-                borderRadius: "1px",
-                boxShadow: `
-                  0 0 8px rgba(249, 115, 22, 0.6),
-                  0 0 12px rgba(249, 115, 22, 0.3)
-                `,
-              }}
-            />
-
-            {/* Premium center dot */}
-            <div
-              className='absolute w-2 h-2 bg-gray-900 rounded-full left-1/2 top-1/2 transition-all duration-200 group-hover:scale-110'
-              style={{
-                transform: "translate(-50%, -50%)",
-                boxShadow: `
-                  inset 1px 1px 2px rgba(255,255,255,0.1),
-                  inset -1px -1px 2px rgba(0,0,0,0.8),
-                  0 0 4px rgba(0,0,0,0.5)
-                `,
-                border: "0.5px solid rgba(0,0,0,0.6)",
+                top: "4px",
+                boxShadow: "0 0 5px rgba(249, 115, 22, 0.7)",
               }}
             />
           </div>
-
-          {/* Premium shine overlay */}
-          <div
-            className='absolute inset-1 rounded-full pointer-events-none transition-opacity duration-200 group-hover:opacity-80'
-            style={{
-              background: `
-                linear-gradient(135deg, 
-                  rgba(255,255,255,0.15) 0%, 
-                  rgba(255,255,255,0.05) 40%,
-                  transparent 70%
-                )
-              `,
-              mixBlendMode: "overlay",
-            }}
-          />
-
-          {/* Active state glow */}
-          <div
-            className='absolute inset-0 rounded-full pointer-events-none opacity-0 transition-all duration-300 group-hover:opacity-100'
-            style={{
-              boxShadow: "0 0 0 2px rgba(249, 115, 22, 0.2)",
-              background: "transparent",
-            }}
-          />
         </div>
-
-        {/* Drag indicator glow */}
-        <div
-          className={`absolute inset-0 rounded-full pointer-events-none transition-opacity duration-200 ${
-            value !== min ? "opacity-100" : "opacity-0"
-          }`}
-          style={{
-            boxShadow: "0 0 20px rgba(249, 115, 22, 0.15)",
-          }}
-        />
       </div>
 
-      {/* Premium label */}
-      <div className='text-xs font-bold text-gray-300 tracking-widest uppercase transition-all duration-200 group-hover:text-orange-300 group-hover:tracking-wide'>
+      {/* Label */}
+      <div className='text-xs font-medium text-gray-400 tracking-wider uppercase transition-colors duration-200 group-hover:text-orange-300'>
         {label}
       </div>
 
-      {/* Premium value display */}
+      {/* Value Display */}
       {isEditing ? (
         <input
           type='text'
@@ -211,12 +143,12 @@ const Knob = ({
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={handleValueBlur}
           onKeyPress={handleKeyPress}
-          className='text-xs text-orange-400 font-mono font-bold px-3 py-1.5 rounded-lg bg-gray-900 min-w-[60px] text-center border-2 border-orange-500 outline-none transition-all duration-200 focus:bg-gray-800 focus:border-orange-400 focus:scale-105'
+          className='text-sm text-orange-400 font-mono bg-transparent w-16 text-center border-b-2 border-orange-500/50 outline-none transition-all duration-200 focus:border-orange-400'
           autoFocus
         />
       ) : (
         <div
-          className='text-xs text-orange-400 font-mono font-bold px-3 py-1.5 rounded-lg bg-gray-900 min-w-[60px] text-center cursor-text transition-all duration-200 hover:bg-gray-800 hover:text-orange-300 hover:scale-105 hover:shadow-lg hover:shadow-orange-500/10'
+          className='text-sm text-orange-400 font-mono w-16 text-center cursor-text transition-colors duration-200 hover:bg-gray-800/50 rounded'
           onClick={handleValueClick}>
           {value % 1 === 0 ? value : value.toFixed(2)}
         </div>

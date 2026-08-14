@@ -4,3 +4,48 @@
 @theme {
   --font-display: "Doto", sans-serif;
 }
+
+/* Set up the main body and background */
+body {
+  @apply bg-gray-800;
+  background-image: url("/textures/metal-texture.png"); /* Textured metal background */
+  background-repeat: repeat;
+}
+
+/* Main container for the virtual rack */
+#root {
+  @apply flex justify-center items-start min-h-screen p-4 sm:p-8;
+  background-image: linear-gradient(to right, #4a3a2a 0%, #2a1a0a 50%, #4a3a2a 100%); /* Dark wood gradient */
+}
+
+/* The synthesizer rack itself */
+.synth-rack {
+  @apply relative w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-4 p-6 rounded-lg shadow-2xl;
+  background-color: #333; /* Dark rack color */
+  background-image: url("/textures/rack-texture.png"); /* Rack texture */
+  border: 4px solid #111; /* Solid border */
+  box-shadow: inset 0 0 20px rgba(0, 0, 0, 0.7), 0 10px 30px rgba(0, 0, 0, 0.5);
+}
+
+/* Wooden side panels */
+.synth-rack::before, .synth-rack::after {
+  content: '';
+  @apply absolute top-0 bottom-0 w-8 bg-repeat-y;
+  background-image: url("/textures/wood-texture.png"); /* Wood texture */
+  background-size: cover;
+  border: 2px solid #000;
+  box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.8);
+}
+
+.synth-rack::before {
+  @apply -left-12;
+  border-right: none;
+  border-radius: 10px 0 0 10px;
+}
+
+.synth-rack::after {
+  @apply -right-12;
+  border-left: none;
+  border-radius: 0 10px 10px 0;
+}
+

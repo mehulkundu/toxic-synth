@@ -1,0 +1,276 @@
+{
+  "plan": [
+    {
+      "stage": "Stage 1: Foundational Components & Core Layout",
+      "version": "v0.1",
+      "status": "done",
+      "steps": [
+        {
+          "id": "1.1",
+          "description": "Create a reusable ModuleContainer component.",
+          "status": "done",
+          "dependencies": [],
+          "changes": [
+            {
+              "type": "create",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/ModuleContainer.jsx",
+              "description": "Create a container for all synth modules with vintage styling (metal texture, border, title, and virtual screws)."
+            }
+          ],
+          "considerations": [
+            "The component must be flexible to wrap any module content.",
+            "It should accept a 'title' prop to display the module name.",
+            "The styling should be easily adaptable."
+          ]
+        },
+        {
+          "id": "1.2",
+          "description": "Create a vertical Slider component.",
+          "status": "completed",
+          "dependencies": [],
+          "changes": [
+            {
+              "type": "create",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/Slider.jsx",
+              "description": "Create a vertical slider component for controls like mixer levels and envelope ADSR. It should have a vintage fader cap design."
+            }
+          ],
+          "considerations": [
+            "The slider needs to be responsive and work smoothly with mouse/touch events.",
+            "It should be stylistically consistent with the vintage theme."
+          ]
+        },
+        {
+          "id": "1.3",
+          "description": "Redesign the Knob component.",
+          "status": "done",
+          "dependencies": [],
+          "changes": [
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/Knob.jsx",
+              "description": "Implement a new, more realistic and space-efficient knob design. Add tick marks around the knob for a more analog feel and refine the value display."
+            }
+          ],
+          "considerations": [
+            "The new design must not break existing functionality.",
+            "The clickable area for value editing should remain clear and usable.",
+            "Performance should be monitored, as many knobs will be on screen."
+          ]
+        },
+        {
+          "id": "1.4",
+          "description": "Implement the main 'Virtual Rack' layout.",
+          "status": "done",
+          "dependencies": ["1.1"],
+          "changes": [
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/WebSynth.jsx",
+              "description": "Overhaul the main layout to create the 4-column 'rack' structure. Add the textured background and wooden side panels. Implement responsive breakpoints for tablet and mobile."
+            },
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/index.css",
+              "description": "Add global styles for the rack background, textures, and other vintage UI elements."
+            }
+          ],
+          "considerations": [
+            "The layout must be flexible and use CSS Grid or Flexbox to handle responsiveness.",
+            "The change from a fixed-width to a full-screen layout needs to be tested across different screen sizes."
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "Stage 2: Sound Source & Master Section",
+      "version": "v0.2",
+      "status": "done",
+      "steps": [
+        {
+          "id": "2.1",
+          "description": "Create the Mixer module.",
+          "status": "done",
+          "dependencies": ["1.1", "1.2"],
+          "changes": [
+            {
+              "type": "create",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/MixerSection.jsx",
+              "description": "Create a new module for mixing the three oscillators and a new noise source. It will use the new Slider and ModuleContainer components."
+            },
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/hooks/useSynthEngine.jsx",
+              "description": "Add state management for the mixer levels and the noise generator."
+            }
+          ],
+          "considerations": [
+            "The mixer is a critical new piece of the audio engine; its integration must be flawless.",
+            "The noise source should have a selectable color (white/pink)."
+          ]
+        },
+        {
+          "id": "2.2",
+          "description": "Redesign and relocate the Oscillator modules.",
+          "status": "done",
+          "dependencies": ["1.1", "1.3", "1.4"],
+          "changes": [
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/OscillatorSection.jsx",
+              "description": "Redesign the layout to be more compact and vertically oriented, using the new Knob and ModuleContainer. Stack the three oscillator modules in the first column of the new rack layout."
+            },
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/WebSynth.jsx",
+              "description": "Update the main layout to place the redesigned oscillator sections in the first column."
+            }
+          ],
+          "considerations": [
+            "The vertical stacking needs to look clean and not cramped.",
+            "Ensure all controls are still easily accessible."
+          ]
+        },
+        {
+          "id": "2.3",
+          "description": "Redesign the Master section.",
+          "status": "done",
+          "dependencies": ["1.4"],
+          "changes": [
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/WebSynth.jsx",
+              "description": "Group all master controls (volume, power, transpose, etc.) into a dedicated master module in the fourth column."
+            }
+          ],
+          "considerations": [
+            "The master section should be clearly delineated from the sound-shaping modules."
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "Stage 3: Sound Shaping & Modulation",
+      "version": "v0.3",
+      "status": "done",
+      "steps": [
+        {
+          "id": "3.1",
+          "description": "Redesign the Filter and Envelope modules.",
+          "status": "done",
+          "dependencies": ["1.1", "1.3", "1.4", "2.2"],
+          "changes": [
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/FilterSection.jsx",
+              "description": "Redesign the filter modules to be more compact and stack them in the second column."
+            },
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/EnvelopeSection.jsx",
+              "description": "Redesign the envelope modules, potentially using sliders for ADSR, and stack them below the filters."
+            }
+          ],
+          "considerations": [
+            "Using sliders for envelopes can be more intuitive than knobs and reinforces the vintage aesthetic."
+          ]
+        },
+        {
+          "id": "3.2",
+          "description": "Redesign the LFO modules.",
+          "status": "done",
+          "dependencies": ["1.1", "1.3", "1.4", "2.2"],
+          "changes": [
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/LfoSection.jsx",
+              "description": "Redesign the LFO modules and stack them in the third column."
+            }
+          ],
+          "considerations": [
+            "The LFO rate visualization should be clear and easy to understand."
+          ]
+        },
+        {
+          "id": "3.3",
+          "description": "Create and integrate the Modulation Matrix.",
+          "status": "done",
+          "dependencies": ["1.1", "3.1", "3.2"],
+          "changes": [
+            {
+              "type": "create",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/ModulationMatrix.jsx",
+              "description": "Create a new component for a simple modulation matrix to route LFOs and envelopes to various destinations."
+            },
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/WebSynth.jsx",
+              "description": "Integrate the ModulationMatrix component into the third column."
+            },
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/hooks/useSynthEngine.jsx",
+              "description": "Update the synth engine to handle the new modulation routings."
+            }
+          ],
+          "considerations": [
+            "The matrix should be simple to start: a dropdown-based source/destination/amount system.",
+            "This is a major UX improvement and should be designed for clarity."
+          ]
+        }
+      ]
+    },
+    {
+      "stage": "Stage 4: Effects & Final Polish",
+      "version": "v0.4",
+      "status": "done",
+      "steps": [
+        {
+          "id": "4.1",
+          "description": "Create the Effects section.",
+          "status": "done",
+          "dependencies": ["1.1", "1.3", "2.3"],
+          "changes": [
+            {
+              "type": "create",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/EffectsSection.jsx",
+              "description": "Create a new module for basic delay and reverb effects."
+            },
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/hooks/useSynthEngine.jsx",
+              "description": "Integrate the effects into the audio signal chain."
+            },
+            {
+              "type": "update",
+              "file": "/Users/mehul/Documents/GitHub/toxic-synth/src/components/WebSynth.jsx",
+              "description": "Add the EffectsSection to the master column."
+            }
+          ],
+          "considerations": [
+            "Start with simple, effective algorithms for delay and reverb.",
+            "The effects should be the last step in the signal chain before the master volume."
+          ]
+        },
+        {
+          "id": "4.2",
+          "description": "Final UI/UX Review and Polish.",
+          "status": "done",
+          "dependencies": ["4.1"],
+          "changes": [
+            {
+              "type": "update",
+              "file": "All files",
+              "description": "Review the entire application for consistency, responsiveness, and visual polish. Adjust spacing, typography, and colors as needed."
+            }
+          ],
+          "considerations": [
+            "Pay close attention to the feel of the interactions.",
+            "Test thoroughly on all target screen sizes (desktop, tablet, mobile).",
+            "Ensure the vintage aesthetic is cohesive across all new components."
+          ]
+        }
+      ]
+    }
+  ]
+}
